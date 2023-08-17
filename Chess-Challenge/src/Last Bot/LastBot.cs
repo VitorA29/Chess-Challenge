@@ -9,7 +9,7 @@ namespace ChessChallenge.Example
     {
         public static IChessBot GetLastBot()
         {
-            return new MyBotV0();
+            return new MyBotV1_1();
         }
     }
 }
