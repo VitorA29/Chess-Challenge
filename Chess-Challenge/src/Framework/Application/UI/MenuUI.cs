@@ -9,23 +9,10 @@ namespace ChessChallenge.Application
     {
         public static void DrawButtons(ChallengeController controller)
         {
-            Vector2 buttonPos = UIHelper.Scale(new Vector2(260, 144));
-            Vector2 buttonSize = UIHelper.Scale(new Vector2(260, 55));
+            Vector2 buttonPos = UIHelper.Scale(new Vector2(260, 80));
+            Vector2 buttonSize = UIHelper.Scale(new Vector2(260, 50));
             float spacing = buttonSize.Y * 1.2f;
             float breakSpacing = spacing * 0.6f;
-
-            // Undo Button
-            if (controller.PlayerWhite.IsHuman || controller.PlayerBlack.IsHuman)
-            {
-                var undoNum = (controller.PlayerWhite.IsBot || controller.PlayerBlack.IsBot) ? 2 : 1 ;
-                if (NextButtonInRow("Undo Move", ref buttonPos, spacing, buttonSize))
-                {
-                    controller.UndoMoves((uint)undoNum);
-                }
-            } else {
-                buttonPos = UIHelper.Scale(new Vector2(260, 210));
-            }
-            
 
             // Game Buttons
             buttonPos.Y += breakSpacing;
@@ -40,10 +27,10 @@ namespace ChessChallenge.Application
                 var blackType = !controller.HumanWasWhiteLastGame ? ChallengeController.PlayerType.MyBot : ChallengeController.PlayerType.Human;
                 controller.StartNewGame(whiteType, blackType);
             }
-            if (NextButtonInRow("MyBot vs MyBot", ref buttonPos, spacing, buttonSize))
-            {
-                controller.StartNewBotMatch(ChallengeController.PlayerType.MyBot, ChallengeController.PlayerType.MyBot);
-            }
+            //if (NextButtonInRow("MyBot vs MyBot", ref buttonPos, spacing, buttonSize))
+            //{
+            //    controller.StartNewBotMatch(ChallengeController.PlayerType.MyBot, ChallengeController.PlayerType.MyBot);
+            //}
             if (NextButtonInRow("MyBot vs EvilBot", ref buttonPos, spacing, buttonSize))
             {
                 controller.StartNewBotMatch(ChallengeController.PlayerType.MyBot, ChallengeController.PlayerType.EvilBot);
@@ -70,6 +57,25 @@ namespace ChessChallenge.Application
                 File.WriteAllText(fullPath, pgns);
                 ConsoleHelper.Log("Saved games to " + fullPath, false, ConsoleColor.Blue);
             }
+            if (controller.PlayerWhite.IsHuman || controller.PlayerBlack.IsHuman)
+            {
+                var undoNum = (controller.PlayerWhite.IsBot || controller.PlayerBlack.IsBot) ? 2 : 1;
+                if (NextButtonInRow("Undo Move", ref buttonPos, spacing, buttonSize))
+                {
+                    controller.UndoMoves((uint)undoNum);
+                }
+            }
+            else if (controller.PlayerWhite.IsBot && controller.PlayerBlack.IsBot)
+            {
+                if (NextButtonInRow("Fast forward", ref buttonPos, spacing, buttonSize))
+                {
+                    controller.fastForward = !controller.fastForward;
+                    if (controller.fastForward)
+                        Settings.RunBotsOnSeparateThread = false;
+                    else
+                        Settings.RunBotsOnSeparateThread = true;
+                }
+            }
             if (NextButtonInRow("Rules & Help", ref buttonPos, spacing, buttonSize))
             {
                 FileHelper.OpenUrl("https://github.com/SebLague/Chess-Challenge");
@@ -92,21 +98,10 @@ namespace ChessChallenge.Application
             {
                 Program.SetWindowSize(isBigWindow ? Settings.ScreenSizeSmall : Settings.ScreenSizeBig);
             }
-
-            if(NextButtonInRow("Smallerer Window", ref buttonPos, spacing,  buttonSize)) 
-            {
-                Program.SetWindowSize(Settings.ScreenSizeXS);
-            }
             
             if (NextButtonInRow("Exit (ESC)", ref buttonPos, spacing, buttonSize))
             {
                 Environment.Exit(0);
-            }
-            if (NextButtonInRow("Fast forward", ref buttonPos, spacing, buttonSize))
-            {
-                controller.fastForward = !controller.fastForward;
-                if(controller.fastForward) Settings.RunBotsOnSeparateThread = false;
-                else Settings.RunBotsOnSeparateThread = true;
             }
 
             bool NextButtonInRow(string name, ref Vector2 pos, float spacingY, Vector2 size)
