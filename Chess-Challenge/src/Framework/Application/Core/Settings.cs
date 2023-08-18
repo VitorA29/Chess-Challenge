@@ -11,6 +11,7 @@ namespace ChessChallenge.Application
         public const int IncrementMilliseconds = 0 * 1000;
         public const float MinMoveDelay = 0.01f;
         public static bool RunBotsOnSeparateThread = true; // IF NOT IN FAST FORWARD, TURN THIS ON - It's no longer readonly
+        public const int StopFastForwardInMultiplesOf = 100;
 
         // Display settings
         public const bool DisplayBoardCoordinates = true;

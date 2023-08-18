@@ -358,6 +358,7 @@ namespace ChessChallenge.Application
                         if (fastForward)
                         {
                             StartNewGame(PlayerBlack.PlayerType, PlayerWhite.PlayerType);
+                            fastForward = (numGamesToPlay % StopFastForwardInMultiplesOf) != 0;
                         }
                         else
                         {
