@@ -9,37 +9,40 @@ public class MyBotV1_2 : IChessBot
     private readonly Queue<IEnumerable<Move>> _searchQueue = new();
     private const int _maxSearchDepth = 3;
     private const int _searchTimeout = 5000;
-    private readonly Random _random = new(1009);
+    private readonly Random _random = new();
 
     private struct BoardNode
     {
-        private readonly ulong _zobristKey;
         private readonly bool _isWhiteToMove;
-        private readonly string _boardFen;
 
         public double Value;
-        public HashSet<Move> BestMoves = new();
         public bool IsSearchDone = false;
+        public readonly HashSet<Move> BestMoves = new();
         public readonly Dictionary<Move, ulong> Transitions = new();
+
+        private BoardNode(bool isWhiteToMove, double value, bool isSearchDone, HashSet<Move> bestMoves, Dictionary<Move, ulong> transitions)
+        {
+            _isWhiteToMove = isWhiteToMove;
+            Value = value;
+            BestMoves = bestMoves;
+            IsSearchDone = isSearchDone;
+            Transitions = transitions;
+        }
 
         public BoardNode(Board board)
         {
-            _zobristKey = board.ZobristKey;
             _isWhiteToMove = board.IsWhiteToMove;
-            _boardFen = board.GetFenString();
             Value = _isWhiteToMove ? int.MinValue : int.MaxValue;
         }
 
-        public BoardNode(Board board, double value, bool isSearchDone)
+        public BoardNode(double value, bool isWhiteToMove, bool isSearchDone)
         {
-            _zobristKey = board.ZobristKey;
-            _isWhiteToMove = board.IsWhiteToMove;
-            _boardFen = board.GetFenString();
+            _isWhiteToMove = isWhiteToMove;
             Value = value;
             IsSearchDone = isSearchDone;
         }
 
-        public void UpdateValue(double newValue, bool isSearchDone, Move move, bool removeBadMoves = true)
+        public void UpdateValue(double newValue, bool isSearchDone, Move move)
         {
             if (Value == newValue)
             {
@@ -54,7 +57,7 @@ public class MyBotV1_2 : IChessBot
                 BestMoves.Add(move);
                 IsSearchDone = isSearchDone;
             }
-            else if (removeBadMoves)
+            else
             {
                 BestMoves.Remove(move);
                 IsSearchDone = IsSearchDone && BestMoves.Count > 0;
@@ -66,26 +69,6 @@ public class MyBotV1_2 : IChessBot
             Value = _isWhiteToMove ? int.MinValue : int.MaxValue;
             BestMoves.Clear();
             IsSearchDone = false;
-        }
-
-        public void Test(ulong key, string fen)
-        {
-            if (_zobristKey == key && _boardFen != fen)
-            {
-                Console.WriteLine($"Invalid board");
-            }
-        }
-
-        public void Done(ulong key)
-        {
-            if (_zobristKey == key && (_isWhiteToMove && Value < 0) || (!_isWhiteToMove && Value > 0))
-            {
-                Console.WriteLine($"Big shit!!! Board is \"{_boardFen}\"");
-            }
-            if (BestMoves.Count == 0)
-            {
-                Console.WriteLine($"Shit value is {Value}");
-            }
         }
     }
 
@@ -115,12 +98,15 @@ public class MyBotV1_2 : IChessBot
     public Move Think(Board board, Timer timer)
     {
         _searchQueue.Enqueue(new List<Move>());
-        var startBoard = board.ZobristKey;
-        var startBoardFen = board.GetFenString();
-        Console.WriteLine($"Board is \"{board.GetFenString()}\"");
+        {
+            if (_searchMap.TryGetValue(board.ZobristKey, out var boardNode))
+            {
+                boardNode.IsSearchDone = false;
+            }
+        }
         while (_searchQueue.Count > 0)
         {
-            if (timer.MillisecondsElapsedThisTurn >= _searchTimeout)
+            if (timer.MillisecondsElapsedThisTurn > _searchTimeout)
             {
                 _searchQueue.Clear();
                 break;
@@ -130,8 +116,7 @@ public class MyBotV1_2 : IChessBot
             {
                 board.MakeMove(realizedMove);
             }
-
-            if (_searchMap.TryGetValue(board.ZobristKey, out var node) && node.IsSearchDone)
+            if (_searchMap.TryGetValue(board.ZobristKey, out var val) && val.IsSearchDone)
             {
                 foreach (var realizedMove in currentBoardSetUp.Reverse())
                 {
@@ -147,16 +132,14 @@ public class MyBotV1_2 : IChessBot
                     parentBoardNode = new(board);
                     _searchMap.Add(board.ZobristKey, parentBoardNode);
                 }
-                parentBoardNode.Test(startBoard, startBoardFen);
                 parentBoardNode.ResetValue();
-                var testChildValues = new List<Tuple<Move, double, bool>>();
                 foreach (var previewMove in board.GetLegalMoves())
                 {
                     board.MakeMove(previewMove);
                     if (!_searchMap.TryGetValue(board.ZobristKey, out var childNode))
                     {
                         var isEnded = EvaluateBoard(board, timer.MillisecondsElapsedThisTurn, out var nodeValue, board.GameMoveHistory.Length + currentBoardSetUp.Count());
-                        childNode = new(board, nodeValue, isEnded);
+                        childNode = new(nodeValue, board.IsWhiteToMove, isEnded);
                         _searchMap.Add(board.ZobristKey, childNode);
                     }
 
@@ -164,12 +147,9 @@ public class MyBotV1_2 : IChessBot
                     {
                         _searchQueue.Enqueue(currentBoardSetUp.Append(previewMove));
                     }
-                    parentBoardNode.Transitions.TryAdd(previewMove, board.ZobristKey);
                     parentBoardNode.UpdateValue(childNode.Value, childNode.IsSearchDone, previewMove);
-                    testChildValues.Add(Tuple.Create(previewMove, childNode.Value, childNode.IsSearchDone));
                     board.UndoMove(previewMove);
                 }
-                parentBoardNode.Done(startBoard);
             }
             finally
             {
@@ -178,7 +158,7 @@ public class MyBotV1_2 : IChessBot
                     var childBoardNode = _searchMap[board.ZobristKey];
                     board.UndoMove(realizedMove);
                     var parentBoardNode = _searchMap[board.ZobristKey];
-                    parentBoardNode.UpdateValue(childBoardNode.Value, childBoardNode.IsSearchDone, realizedMove, true);
+                    parentBoardNode.UpdateValue(childBoardNode.Value, childBoardNode.IsSearchDone, realizedMove);
                     if (parentBoardNode.BestMoves.Count == 0)
                     {
                         parentBoardNode.ResetValue();
@@ -188,15 +168,10 @@ public class MyBotV1_2 : IChessBot
                             parentBoardNode.UpdateValue(auxChild.Value, auxChild.IsSearchDone, move);
                         }
                     }
-                    parentBoardNode.Done(startBoard);
                 }
             }
         }
-        _searchMap.Remove(board.ZobristKey, out var boardNode);
-        if ((board.IsWhiteToMove && boardNode.Value < 0) || (!board.IsWhiteToMove && boardNode.Value > 0))
-        {
-            Console.WriteLine($"{(board.IsWhiteToMove ? "White" : "Black")} value is {boardNode.Value} with {boardNode.BestMoves.Count} good moves.");
-        }
-        return boardNode.BestMoves.ElementAt(_random.Next(boardNode.BestMoves.Count));
+        var allMoves = _searchMap[board.ZobristKey].BestMoves;
+        return allMoves.ElementAt(_random.Next(allMoves.Count));
     }
 }
