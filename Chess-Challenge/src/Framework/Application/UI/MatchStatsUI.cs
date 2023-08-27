@@ -42,11 +42,11 @@ namespace ChessChallenge.Application
                     DrawNextText($"Score: +{stats.NumWins} ={stats.NumDraws} -{stats.NumLosses}", regularFontSize, white);
                     DrawNextText($"Num Timeouts: {stats.NumTimeouts}", regularFontSize, col);
                     DrawNextText($"Num Illegal Moves: {stats.NumIllegalMoves}", regularFontSize, col);
-                    DrawNextText($"Winrate: {(float)stats.NumWins / (controller.CurrGameNumber - 1) * 100}%", regularFontSize, green);
-                    DrawNextText($"Draw rate: {(float)stats.NumDraws / (controller.CurrGameNumber - 1) * 100}%", regularFontSize, white);
-                    DrawNextText($"Loss rate: {(float)stats.NumLosses / (controller.CurrGameNumber - 1) * 100}%", regularFontSize, red);
+                    DrawNextText($"Winrate: {CalculateRate(stats.NumWins, controller.CurrGameNumber)}", regularFontSize, green);
+                    DrawNextText($"Draw rate: {CalculateRate(stats.NumDraws, controller.CurrGameNumber)}", regularFontSize, white);
+                    DrawNextText($"Loss rate: {CalculateRate(stats.NumLosses, controller.CurrGameNumber)}", regularFontSize, red);
                 }
-                DrawNextText($"Average moves per game: {controller.trueTotalMovesPlayed / controller.CurrGameNumber - 1}", regularFontSize, white);
+                DrawNextText($"Average moves per game: {CalculateRate(controller.trueTotalMovesPlayed, controller.CurrGameNumber, true)}", regularFontSize, white);
 
 
                 void DrawNextText(string text, int fontSize, Color col)
@@ -55,6 +55,22 @@ namespace ChessChallenge.Application
                     startPos.Y += spacingY;
                 }
             }
+        }
+
+        private static string CalculateRate(int numerator, int gameNumber, bool returnFraction = false)
+        {
+            if (gameNumber == 1)
+            {
+                return "0";
+            }
+            var rate = (double) numerator / (gameNumber - 1);
+
+            if (returnFraction)
+            {
+                return $"{rate:0.###}";
+            }
+
+            return $"{rate * 100:0.###}%";
         }
 
         private static string CalculateElo(int wins, int draws, int losses)

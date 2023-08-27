@@ -48,7 +48,7 @@ namespace ChessChallenge.Application
             int barHeight = UIHelper.ScaleInt(48);
             int fontSize = UIHelper.ScaleInt(35);
             // Bg
-            Raylib.DrawRectangle(startPos, screenHeight - barHeight, startPos + barWidth, barHeight, background);
+            Raylib.DrawRectangle(startPos, screenHeight - barHeight, barWidth, barHeight, background);
             // Bar
             Color col;
             if (t <= 0.7)
@@ -60,7 +60,7 @@ namespace ChessChallenge.Application
             else
                 col = red;
             
-            Raylib.DrawRectangle(startPos, screenHeight - barHeight, startPos + (int)(barWidth * Math.Min(t, 1)), barHeight, col);
+            Raylib.DrawRectangle(startPos, screenHeight - barHeight, (int)(barWidth * Math.Min(t, 1)), barHeight, col);
 
             var textPos = new System.Numerics.Vector2(startPos + barWidth / 2, screenHeight - barHeight / 2);
             UIHelper.DrawText(text, textPos, fontSize, 1, Color.WHITE, UIHelper.AlignH.Centre);
