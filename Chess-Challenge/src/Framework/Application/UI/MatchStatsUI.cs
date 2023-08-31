@@ -18,7 +18,7 @@ namespace ChessChallenge.Application
                 Color white = new(225, 225, 225, 225);
                 Color red = new Color(200, 0, 0, 255);
                 Color green = new Color(0, 200, 0, 255);
-                Vector2 startPos = UIHelper.Scale(new Vector2(1500, 150));
+                Vector2 startPos = UIHelper.Scale(new Vector2(1500, 100));
                 float spacingY = UIHelper.Scale(35);
 
                 DrawNextText($"Game {controller.CurrGameNumber} of {controller.TotalGameCount}", headerFontSize, Color.WHITE);
@@ -57,7 +57,7 @@ namespace ChessChallenge.Application
             }
         }
 
-        private static string CalculateRate(int numerator, int gameNumber, bool returnFraction = false)
+        private static string CalculateRate(int numerator, int gameNumber, bool returnInteger = false)
         {
             if (gameNumber == 1)
             {
@@ -65,12 +65,12 @@ namespace ChessChallenge.Application
             }
             var rate = (double) numerator / (gameNumber - 1);
 
-            if (returnFraction)
+            if (returnInteger)
             {
-                return $"{rate:0.###}";
+                return $"{Math.Floor(rate):0}";
             }
 
-            return $"{rate * 100:0.###}%";
+            return $"{rate * 100:0.##}%";
         }
 
         private static string CalculateElo(int wins, int draws, int losses)
