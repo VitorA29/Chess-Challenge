@@ -20,15 +20,6 @@ public class MyBotV1_2 : IChessBot
         public readonly HashSet<Move> BestMoves = new();
         public readonly Dictionary<Move, ulong> Transitions = new();
 
-        private BoardNode(bool isWhiteToMove, double value, bool isSearchDone, HashSet<Move> bestMoves, Dictionary<Move, ulong> transitions)
-        {
-            _isWhiteToMove = isWhiteToMove;
-            Value = value;
-            BestMoves = bestMoves;
-            IsSearchDone = isSearchDone;
-            Transitions = transitions;
-        }
-
         public BoardNode(Board board)
         {
             _isWhiteToMove = board.IsWhiteToMove;
@@ -148,6 +139,7 @@ public class MyBotV1_2 : IChessBot
                         _searchQueue.Enqueue(currentBoardSetUp.Append(previewMove));
                     }
                     parentBoardNode.UpdateValue(childNode.Value, childNode.IsSearchDone, previewMove);
+                    parentBoardNode.Transitions.TryAdd(previewMove, board.ZobristKey);
                     board.UndoMove(previewMove);
                 }
             }
