@@ -17,7 +17,7 @@ public class MyBotV1_2 : IChessBot
 
         public double Value;
         public bool IsSearchDone = false;
-        public readonly HashSet<Move> BestMoves = new();
+        public HashSet<Move> BestMoves = new();
         public readonly Dictionary<Move, ulong> Transitions = new();
 
         public BoardNode(Board board)
@@ -44,8 +44,7 @@ public class MyBotV1_2 : IChessBot
             || (!_isWhiteToMove && Value > newValue))
             {
                 Value = newValue;
-                BestMoves.Clear();
-                BestMoves.Add(move);
+                BestMoves = new() { move };
                 IsSearchDone = isSearchDone;
             }
             else
@@ -58,7 +57,7 @@ public class MyBotV1_2 : IChessBot
         public void ResetValue()
         {
             Value = _isWhiteToMove ? int.MinValue : int.MaxValue;
-            BestMoves.Clear();
+            BestMoves = new();
             IsSearchDone = false;
         }
     }
