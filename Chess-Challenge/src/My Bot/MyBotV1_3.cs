@@ -1,10 +1,9 @@
 ﻿using ChessChallenge.API;
 using System;
-using System.Numerics;
 using System.Collections.Generic;
 using System.Linq;
 
-public class MyBot : IChessBot
+public class MyBotV1_3 : IChessBot
 {
     private readonly Dictionary<ulong, BoardNode> _searchMap = new();
     private const int _maxSearchDepth = 7;
@@ -67,6 +66,11 @@ public class MyBot : IChessBot
             _value = IsWhiteToMove ? int.MinValue : int.MaxValue;
             BestMoves = new();
             IsSearchDone = false;
+        }
+
+        public override string ToString()
+        {
+            return $"BoardNode({(IsWhiteToMove ? "White" : "Black")}, [{Value} ({_stateValue})], [{string.Join(", ", BestMoves)}], {IsSearchDone}, {Transitions.Count})";
         }
     }
 
@@ -174,6 +178,7 @@ public class MyBot : IChessBot
         {
             ExploreBoard(board.ZobristKey, board, timer, new List<Move>());
         }
+       
         var allMoves = _searchMap[board.ZobristKey].BestMoves;
         return allMoves.ElementAt(_random.Next(allMoves.Count));
     }
